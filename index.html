@@ -93,7 +93,7 @@
         physics: {
             default: 'arcade',
             arcade: {
-                gravity: {y: 600},
+                gravity: {y: 400},
                 debug: false
             }
         },
@@ -105,6 +105,8 @@
     };
 
     var game = new Phaser.Game(config);
+
+    let score = 0;
 
     function preload () {
         this.load.image('sky', 'assets/sky.png');
@@ -124,12 +126,15 @@
         platforms.create(600, 400, 'ground');
         platforms.create(50, 250, 'ground');
         platforms.create(750, 220, 'ground');
-        
+
+
+        //player object added to screen
         player = this.physics.add.sprite(100, 450, 'dude');
 
-        player.setBounce(0.4);
-        player.setCollideWorldBounds(true);
+        player.setBounce(0.4); //player bounces when landing on ground
+        player.setCollideWorldBounds(true); //sets the bounds of game screen to the screen itself
         
+        //add in animations of sprite sheet
         this.anims.create({
             key: 'left',
             frames: this.anims.generateFrameNumbers('dude', {start: 0, end: 3}),
@@ -152,10 +157,27 @@
 
         cursors = this.input.keyboard.createCursorKeys();
 
-        // player.body.setGravityY(300);
+        stars = this.physics.add.group({
+            key: 'star',
+            repeat: 11,
+            setXY: {x: 12, y: 0, stepX: 70}
+        });
+
+        stars.children.iterate(function (child) {
+            child.setBounce(Phaser.Math.FloatBetween(0.4, 0.8));
+        });
+
+
+        let scoreText = this.add.text(16, 16, 'score: 0', {fontSize: '32px', fill: '#000'});
+
+        // player.body.setGravityY(300); 
+        //set the collision of two objects or groups of objects
         this.physics.add.collider(player, platforms);
+        this.physics.add.collider(stars, platforms);
+        this.physics.add.overlap(player, stars, collectStar, null, this);
     }
 
+    let jump = 0;
     function update () {
         if (cursors.left.isDown) {
             player.setVelocityX(-160);
@@ -170,19 +192,24 @@
             player.anims.play('turn');
         }
 
-        if (cursors.up.isDown && !player.body.touching.down) {
-        let jump = 0;
-            if (jump < 1) {
-                player.setVelocityY(-200);
-                jump++;
-                console.log(jump);
-            }
+        
+        // 
+        if (cursors.up.isDown && player.body.touching.down) {
+            player.setVelocityY(-380);
+            jump++;
+            console.log(jump);
         }
 
-        if (cursors.up.isDown && player.body.touching.down) {
-            player.setVelocityY(-250);
-        }
+        setTimeout( function jumpDelay() {
+            if (jump <= 2) {
+                jump = 0;
+            }
+        }, 2000);
     }
+
+    function collectStar(player, star) {
+            star.disableBody(true, true);
+        }
 
 </script>
 
